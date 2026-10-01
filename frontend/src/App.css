@@ -131,6 +131,24 @@
   display: block;
 }
 
+.upload-status {
+  margin: 10px 0 0;
+  font-size: 0.84rem;
+  font-weight: 600;
+}
+
+.upload-status--uploading {
+  color: #5a4a8d;
+}
+
+.upload-status--success {
+  color: #22794f;
+}
+
+.upload-status--error {
+  color: #b13561;
+}
+
 .upload-area--compact {
   margin-top: 2px;
 }

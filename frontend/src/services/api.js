@@ -24,3 +24,33 @@ export async function checkHealth() {
     }
   }
 }
+
+export async function uploadImage(file) {
+  if (!file) {
+    return { ok: false, error: 'Файл не найден.' }
+  }
+
+  const formData = new FormData()
+  formData.append('file', file)
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/images/upload`, {
+      method: 'POST',
+      body: formData,
+    })
+
+    const payload = await response.json().catch(() => null)
+
+    if (!response.ok) {
+      const message = payload?.detail || 'Не удалось загрузить изображение.'
+      return { ok: false, error: message }
+    }
+
+    return { ok: true, data: payload }
+  } catch (error) {
+    return {
+      ok: false,
+      error: 'Не удалось загрузить изображение. Проверьте соединение с сервером.',
+    }
+  }
+}
