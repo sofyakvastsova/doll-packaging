@@ -44,6 +44,16 @@
   margin-bottom: 18px;
 }
 
+.accent-color-picker {
+  width: 52px;
+  height: 42px;
+  padding: 3px;
+  border: 1px solid #ded3e9;
+  border-radius: 9px;
+  background: #fff;
+  cursor: pointer;
+}
+
 .field-label {
   display: block;
   margin-bottom: 10px;
@@ -513,6 +523,43 @@
 .package-preview--monster-high .badge {
   background: rgba(250, 240, 255, 0.88);
   color: #5f2a75;
+}
+
+.preview-card--template {
+  min-height: 0;
+  padding: 0;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.monster-high-template {
+  width: 100%;
+  line-height: 0;
+}
+
+.monster-high-template svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.template-loading {
+  display: block;
+  padding: 24px;
+  color: #756b78;
+  text-align: center;
+}
+
+.preview-card--reserved {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 180px;
+  border: 1px dashed #c9bfce;
+  background: #f6f4f5;
+  color: #756b78;
+  font-size: 0.92rem;
+  text-align: center;
 }
 
 @media (max-width: 900px) {

@@ -8,12 +8,14 @@ import PackagePreview from '../components/PackagePreview'
 import ServerStatus from '../components/ServerStatus'
 import { checkHealth } from '../services/api'
 import { outerBackgrounds, innerBackgrounds } from '../data/backgrounds'
+import { ORIGINAL_MONSTER_HIGH_ACCENT } from '../data/monsterHighPalette'
 
 const defaultOuter = outerBackgrounds[0]
 const defaultInner = innerBackgrounds[0]
 
 function PackageCreator() {
-  const [packagingType, setPackagingType] = useState('bratz')
+  const [packagingType, setPackagingType] = useState('monster-high')
+  const [accentColor, setAccentColor] = useState(ORIGINAL_MONSTER_HIGH_ACCENT)
   const [dollImage, setDollImage] = useState('')
   const [dollImageName, setDollImageName] = useState('')
   const [imageSource, setImageSource] = useState('upload')
@@ -49,6 +51,7 @@ function PackageCreator() {
         <section className="preview-panel" aria-label="Предпросмотр упаковки">
           <PackagePreview
             packagingType={packagingType}
+            accentColor={accentColor}
             dollImage={dollImage}
             outerBackground={outerBackground}
             innerBackground={innerBackground}
@@ -60,6 +63,19 @@ function PackageCreator() {
 
         <aside className="settings-panel" aria-label="Настройки упаковки">
           <PackagingTypeSelector value={packagingType} onChange={setPackagingType} />
+
+          {packagingType === 'monster-high' ? (
+            <div className="field-block">
+              <label className="field-label" htmlFor="monster-high-accent-color">Акцентный цвет внешней коробки</label>
+              <input
+                id="monster-high-accent-color"
+                className="accent-color-picker"
+                type="color"
+                value={accentColor}
+                onChange={(event) => setAccentColor(event.target.value.toUpperCase())}
+              />
+            </div>
+          ) : null}
 
           <ImageUpload
             value={dollImage}
@@ -76,21 +92,25 @@ function PackageCreator() {
             }}
           />
 
-          <BackgroundSelector
-            label="Внешний фон"
-            options={outerBackgrounds}
-            value={outerBackground}
-            onSelect={setOuterBackground}
-            onCustomUpload={(url) => setOuterBackground({ kind: 'custom', value: url, id: 'custom-outer' })}
-          />
+          {packagingType === 'bratz' ? (
+            <BackgroundSelector
+              label="Внешний фон"
+              options={outerBackgrounds}
+              value={outerBackground}
+              onSelect={setOuterBackground}
+              onCustomUpload={(url) => setOuterBackground({ kind: 'custom', value: url, id: 'custom-outer' })}
+            />
+          ) : null}
 
-          <BackgroundSelector
-            label="Внутренний фон"
-            options={innerBackgrounds}
-            value={innerBackground}
-            onSelect={setInnerBackground}
-            onCustomUpload={(url) => setInnerBackground({ kind: 'custom', value: url, id: 'custom-inner' })}
-          />
+          {packagingType === 'bratz' ? (
+            <BackgroundSelector
+              label="Внутренний фон"
+              options={innerBackgrounds}
+              value={innerBackground}
+              onSelect={setInnerBackground}
+              onCustomUpload={(url) => setInnerBackground({ kind: 'custom', value: url, id: 'custom-inner' })}
+            />
+          ) : null}
 
           <LogoUpload
             value={logo}

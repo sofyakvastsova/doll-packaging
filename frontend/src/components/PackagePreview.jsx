@@ -1,5 +1,9 @@
+import { useEffect, useState } from 'react'
+import { createMonsterHighSvg, monsterHighSvgUrl } from '../data/monsterHighPalette'
+
 function PackagePreview({
   packagingType,
+  accentColor,
   dollImage,
   outerBackground,
   innerBackground,
@@ -17,6 +21,40 @@ function PackagePreview({
 
   const innerStyle = {
     background: innerBackground?.value || 'linear-gradient(135deg, #fff9f4 0%, #f5e5d8 35%, #ebd2c3 100%)',
+  }
+
+  const [monsterHighSvgSource, setMonsterHighSvgSource] = useState('')
+
+  useEffect(() => {
+    let active = true
+
+    fetch(monsterHighSvgUrl)
+      .then((response) => response.text())
+      .then((source) => {
+        if (active) setMonsterHighSvgSource(source)
+      })
+      .catch(() => {
+        if (active) setMonsterHighSvgSource('')
+      })
+
+    return () => {
+      active = false
+    }
+  }, [])
+
+  if (packagingType === 'monster-high') {
+    const svg = monsterHighSvgSource ? createMonsterHighSvg(monsterHighSvgSource, accentColor) : ''
+
+    return (
+      <div className="package-preview package-preview--monster-high">
+        <div className="preview-card preview-card--template" aria-label="Шаблон упаковки Monster High">
+          {svg ? <div className="monster-high-template" dangerouslySetInnerHTML={{ __html: svg }} /> : <span className="template-loading">Загрузка шаблона…</span>}
+        </div>
+        <div className="preview-card preview-card--reserved" aria-label="Шаблон фона">
+          <span>Шаблон фона пока не добавлен</span>
+        </div>
+      </div>
+    )
   }
 
   return (
