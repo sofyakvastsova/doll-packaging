@@ -87,3 +87,37 @@ curl http://localhost:8000/api/health
 ```json
 {"status": "ok"}
 ```
+
+## AI-модуль PhotoPanda
+
+AI-интеграция изолирована в `backend/app/services/ai/photopanda.py` и `backend/app/services/ai/config.py`. FastAPI route только передаёт сохранённый UUID исходного изображения и выбранный стиль сервису; ключ, prompt и пути reference-файлов frontend не получает. Результат сохраняется через существующий image storage и возвращается с URL для preview.
+
+Текущая конфигурация reference-файлов:
+
+- Bratz: `assets/doll-style-reference.png` (файл уже добавлен).
+- Monster High: `assets/monster-high-style-reference.png` (файл нужно добавить отдельно).
+
+Пути задаются в `backend/app/services/ai/config.py`; это локальные ресурсы проекта, не загружаемые пользователем при каждом запросе. Если reference выбранного стиля отсутствует, backend возвращает configuration error и не обращается к PhotoPanda.
+
+Создайте `backend/.env` на основе `backend/.env.example` и добавьте ключ:
+
+```env
+PHOTOPANDA_API_KEY=ваш_ключ
+PHOTOPANDA_MODEL_ID=gpt-image-2-medium
+PHOTOPANDA_RESOLUTION=1K
+```
+
+`backend/.env` игнорируется Git. API key остаётся только на backend. Конфигурация по умолчанию: `gpt-image-2-medium`, `1K`; разрешённые варианты модели и разрешения описаны в `config.py`.
+
+PhotoPanda получает `POST https://photopanda.ru/api/v1/v1/photos/process` с `operation=prompt_edit`, одним `file` (исходное фото), одним multipart `reference` (стиль), общим `prompt`, `modelId` и `resolution`. Prompt общий для обоих стилей; различается только reference. При успехе backend скачивает `outputUrl`, проверяет signature/MIME и размер до 25 МБ, затем сохраняет файл в `backend/uploads/images/`. Загрузки и генерации продолжают использовать уже существующую проверку исходного фото JPG/JPEG/PNG до 10 МБ.
+
+Установка и запуск:
+
+```bash
+cd backend
+source .venv/bin/activate
+pip install -r requirements.txt
+uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+```
+
+В существующем frontend загрузите исходное фото, выберите Bratz или Monster High, перейдите на «Создать по фото» и запустите генерацию. Повтор доступен вручную; автоматических повторов нет. Результат отображается в текущем preview-сценарии. Для запуска тестов используйте `python -m pytest backend/tests` из корня репозитория или `pytest -q` из `backend/`; тесты мокируют весь PhotoPanda HTTP-трафик и не расходуют баланс.

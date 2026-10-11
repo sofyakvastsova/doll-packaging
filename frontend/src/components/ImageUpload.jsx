@@ -1,13 +1,27 @@
 import { useEffect, useRef, useState } from 'react'
-import { uploadImage } from '../services/api'
+import { generateDollImage, uploadImage } from '../services/api'
 
 const ACCEPTED_TYPES = ['image/jpeg', 'image/jpg', 'image/png']
 
-function ImageUpload({ value, fileName, imageSource, onSourceChange, onUpload, onRemove }) {
+function ImageUpload({
+  value,
+  fileName,
+  imageSource,
+  sourceImageUrl,
+  sourceFilename,
+  style,
+  onSourceChange,
+  onUpload,
+  onGenerated,
+  onRemove,
+}) {
   const inputRef = useRef(null)
   const [previewImage, setPreviewImage] = useState(value || '')
   const [uploadState, setUploadState] = useState(value ? 'success' : 'idle')
   const [statusMessage, setStatusMessage] = useState(value ? 'Изображение загружено' : '')
+  const [generationState, setGenerationState] = useState('idle')
+  const [generationError, setGenerationError] = useState('')
+  const [generationResult, setGenerationResult] = useState(null)
 
   useEffect(() => {
     if (value) {
@@ -62,16 +76,42 @@ function ImageUpload({ value, fileName, imageSource, onSourceChange, onUpload, o
     }
 
     const serverUrl = new URL(result.data.url, 'http://localhost:8000').toString()
-    onUpload(serverUrl, file.name)
+    onUpload(serverUrl, file.name, result.data.filename)
+    setGenerationState('idle')
+    setGenerationError('')
+    setGenerationResult(null)
     setUploadState('success')
     setStatusMessage('Изображение загружено')
     event.target.value = ''
+  }
+
+  const handleGenerate = async () => {
+    if (!sourceFilename || generationState === 'loading') return
+
+    setGenerationState('loading')
+    setGenerationError('')
+    setGenerationResult(null)
+    const result = await generateDollImage(sourceFilename, style)
+
+    if (!result.ok) {
+      setGenerationState('error')
+      setGenerationError(result.error)
+      return
+    }
+
+    const generatedUrl = new URL(result.data.url, 'http://localhost:8000').toString()
+    setGenerationResult({ ...result.data, displayUrl: generatedUrl })
+    setGenerationState('success')
+    onGenerated(generatedUrl, result.data.filename)
   }
 
   const handleRemove = () => {
     setPreviewImage('')
     setUploadState('idle')
     setStatusMessage('')
+    setGenerationState('idle')
+    setGenerationError('')
+    setGenerationResult(null)
     onRemove()
   }
 
@@ -97,7 +137,46 @@ function ImageUpload({ value, fileName, imageSource, onSourceChange, onUpload, o
       </div>
 
       {imageSource === 'ai' ? (
-        <div className="inline-note">AI-генерация будет подключена на следующем этапе.</div>
+        <div className="ai-generation" aria-busy={generationState === 'loading'}>
+          {sourceImageUrl ? (
+            <div className="media-card ai-generation__source">
+              <img src={sourceImageUrl} alt="Исходное фото для генерации" className="media-preview" />
+              <div className="media-meta">
+                <span>{sourceFilename}</span>
+                <span>{style === 'monster_high' ? 'Стиль Monster High' : 'Стиль Bratz'}</span>
+              </div>
+            </div>
+          ) : (
+            <div className="inline-note">
+              Для генерации сначала загрузите исходное фото.
+              <button type="button" className="text-button ai-generation__upload-link" onClick={() => onSourceChange('upload')}>
+                Перейти к загрузке
+              </button>
+            </div>
+          )}
+
+          <button
+            type="button"
+            className="ghost-button ai-generation__button"
+            disabled={!sourceFilename || generationState === 'loading'}
+            onClick={handleGenerate}
+          >
+            {generationState === 'loading' ? 'Создаём иллюстрацию…' : generationResult ? 'Создать ещё раз' : 'Создать иллюстрацию'}
+          </button>
+
+          {generationState === 'loading' ? (
+            <p className="upload-status upload-status--uploading" role="status">Запрос отправлен. Это может занять до трёх минут.</p>
+          ) : null}
+          {generationError ? <p className="upload-status upload-status--error" role="alert">{generationError}</p> : null}
+          {generationResult ? (
+            <div className="ai-generation__result" aria-label="Результат генерации">
+              <img src={generationResult.displayUrl} alt="Стилизованная кукла" className="ai-generation__image" />
+              <p className="ai-generation__metrics" role="status">
+                Готово · PhotoPanda · {generationResult.model_id} · {generationResult.duration_ms} мс · попыток: {generationResult.attempts}
+              </p>
+            </div>
+          ) : null}
+        </div>
       ) : null}
 
       {imageSource === 'upload' ? (

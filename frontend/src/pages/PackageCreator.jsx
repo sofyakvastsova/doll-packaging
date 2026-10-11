@@ -18,6 +18,7 @@ function PackageCreator() {
   const [accentColor, setAccentColor] = useState(ORIGINAL_MONSTER_HIGH_ACCENT)
   const [dollImage, setDollImage] = useState('')
   const [dollImageName, setDollImageName] = useState('')
+  const [uploadedPhoto, setUploadedPhoto] = useState({ url: '', filename: '' })
   const [imageSource, setImageSource] = useState('upload')
   const [outerBackground, setOuterBackground] = useState({ kind: 'preset', value: defaultOuter.value, id: defaultOuter.id })
   const [innerBackground, setInnerBackground] = useState({ kind: 'preset', value: defaultInner.value, id: defaultInner.id })
@@ -81,14 +82,23 @@ function PackageCreator() {
             value={dollImage}
             fileName={dollImageName}
             imageSource={imageSource}
+            sourceImageUrl={uploadedPhoto.url}
+            sourceFilename={uploadedPhoto.filename}
+            style={packagingType.replace('-', '_')}
             onSourceChange={setImageSource}
-            onUpload={(url, fileName) => {
+            onUpload={(url, fileName, sourceFilename) => {
+              setDollImage(url)
+              setDollImageName(fileName)
+              setUploadedPhoto({ url, filename: sourceFilename })
+            }}
+            onGenerated={(url, fileName) => {
               setDollImage(url)
               setDollImageName(fileName)
             }}
             onRemove={() => {
               setDollImage('')
               setDollImageName('')
+              setUploadedPhoto({ url: '', filename: '' })
             }}
           />
 
