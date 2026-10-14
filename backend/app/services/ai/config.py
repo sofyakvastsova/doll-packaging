@@ -13,24 +13,37 @@ REQUEST_TIMEOUT_SECONDS = 180
 MAX_INPUT_SIZE_BYTES = 10 * 1024 * 1024
 MAX_OUTPUT_SIZE_BYTES = 25 * 1024 * 1024
 
+
+def _resolve_style_reference_paths(style: str) -> list[Path]:
+    candidates = {
+        'bratz': [
+            'bratzReference1.png',
+            'bratzReference2.png',
+            'bratzReference3.png',
+            'doll-style-reference.png',
+        ],
+        'monster_high': [
+            'monster-high-style-reference.png',
+            'monsterHighReference1.png',
+            'monster-high-reference.png',
+        ],
+    }
+
+    resolved: list[Path] = []
+    for name in candidates.get(style, []):
+        path = PROJECT_ROOT / 'assets' / name
+        if path.exists():
+            resolved.append(path)
+    return resolved
+
+
 STYLE_REFERENCE_PATHS = {
-    'bratz': PROJECT_ROOT / 'assets' / 'doll-style-reference.png',
-    'monster_high': PROJECT_ROOT / 'assets' / 'monster-high-style-reference.png',
+    'bratz': _resolve_style_reference_paths('bratz'),
+    'monster_high': _resolve_style_reference_paths('monster_high'),
 }
 
-STYLE_PROMPT = '''Полностью перерисуй девушку с первого изображения в художественном стиле второго.
-
-Первое фото — источник внешности, узнаваемых черт, позы, прически, одежды и композиции. Второе — обязательный референс стиля.
-
-Не накладывай фильтр на фотографию. Создай полноценную иллюстрацию с нуля, изменив формы, линии, пропорции и способ изображения человека.
-
-Максимально точно передай стиль второго изображения: стилизацию лица и глаз, формы носа и губ, прорисовку волос и одежды, характер линий, цветовую палитру, тени, свет, объём, детализацию и настроение.
-
-Полностью замени фотографические текстуры и реалистичные детали их художественным изображением. Все элементы должны выглядеть как единая иллюстрация, нарисованная художником.
-
-Сохрани узнаваемость девушки с первого фото. Не копируй внешность персонажа со второго изображения.
-
-Первое изображение — внешность и композиция. Второе — стиль, формы и манера рисовки.'''
+STYLE_PROMPT = '''Transform the girl in image 1 into a full-body artwork matching the artistic language of images 2–4. Study and replicate their proportions, shapes, linework and hand-drawn texture. Exaggerate the anatomy: the head and legs must be much larger relative to the short, small torso. Do not use realistic human proportions; follow the references even if the result looks deliberately stylized or anatomically unusual. Keep her recognizable face, hairstyle, outfit and defining details. Use visible strokes, loose sketchy lines, irregular contours and imperfect color fills. Hair should be simplified and schematic, built from curls and directional strokes rather than finely rendered individual hairs. Avoid smooth gradients, flawless surfaces, uniform coloring and excessive digital polish. The result should look genuinely hand-drawn, not like a filtered photo or generic AI art. Show the complete figure from head to toe. Image 1 is the character reference; images 2–4 are the style and proportion
+'''
 
 
 @dataclass(frozen=True)

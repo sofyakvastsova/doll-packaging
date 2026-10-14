@@ -74,33 +74,9 @@ export async function generateDollImage(sourceFilename, style) {
     if (!response.ok) {
       return { ok: false, error: payload?.detail || 'Не удалось создать иллюстрацию.' }
     }
+
     return { ok: true, data: payload }
   } catch {
     return { ok: false, error: 'Не удалось связаться с PhotoPanda. Исходное фото сохранено.' }
-  }
-}
-
-export async function generateDollImage(sourceFilename, style) {
-  if (!sourceFilename) {
-    return { ok: false, error: 'Сначала загрузите исходное фото.' }
-  }
-
-  const formData = new FormData()
-  formData.append('source_filename', sourceFilename)
-  formData.append('style', style)
-
-  try {
-    const response = await fetch(`${API_BASE_URL}/api/images/generate`, {
-      method: 'POST',
-      body: formData,
-    })
-    const payload = await response.json().catch(() => null)
-
-    if (!response.ok) {
-      return { ok: false, error: payload?.detail || 'Не удалось создать иллюстрацию.' }
-    }
-    return { ok: true, data: payload }
-  } catch {
-    return { ok: false, error: 'Не удалось связаться с сервисом генерации. Исходное фото сохранено.' }
   }
 }

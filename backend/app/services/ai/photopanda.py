@@ -53,25 +53,42 @@ def _image_content_type(image_bytes: bytes) -> str | None:
     return None
 
 
-def _reference_for_style(style: str) -> tuple[bytes, str, str]:
-    reference_path = STYLE_REFERENCE_PATHS.get(style)
-    if reference_path is None:
+def _reference_files_for_style(style: str) -> list[tuple[bytes, str, str]]:
+    raw_reference = STYLE_REFERENCE_PATHS.get(style)
+    if raw_reference is None:
         raise _error(422, 'Выбран неподдерживаемый стиль куклы.')
-    if not reference_path.is_file():
-        raise _error(503, f'Для стиля {style} пока не добавлен эталон изображения.')
 
-    try:
-        reference_bytes = reference_path.read_bytes()
-    except OSError as error:
-        raise _error(503, 'Не удалось прочитать эталон изображения стиля.') from error
+    if isinstance(raw_reference, (str, Path)):
+        reference_paths = [Path(raw_reference)]
+    elif isinstance(raw_reference, (list, tuple, set)):
+        reference_paths = [Path(path) for path in raw_reference]
+    else:
+        raise _error(503, 'Конфигурация стиля содержит некорректные эталоны изображений.')
 
-    if not reference_bytes or len(reference_bytes) > MAX_INPUT_SIZE_BYTES:
-        raise _error(503, 'Файл эталонного изображения пуст или превышает 10 МБ.')
+    if not reference_paths:
+        raise _error(503, f'Для стиля {style} пока не добавлены эталоны изображения.')
+    if len(reference_paths) > 4:
+        raise _error(503, 'PhotoPanda принимает не более 4 эталонных изображений.')
 
-    content_type = _image_content_type(reference_bytes)
-    if content_type is None:
-        raise _error(503, 'Файл эталонного изображения имеет неподдерживаемый формат.')
-    return reference_bytes, reference_path.name, content_type
+    reference_files: list[tuple[bytes, str, str]] = []
+    for reference_path in reference_paths:
+        if not reference_path.is_file():
+            raise _error(503, f'Для стиля {style} пока не добавлен эталон изображения: {reference_path.name}')
+
+        try:
+            reference_bytes = reference_path.read_bytes()
+        except OSError as error:
+            raise _error(503, 'Не удалось прочитать эталон изображения стиля.') from error
+
+        if not reference_bytes or len(reference_bytes) > MAX_INPUT_SIZE_BYTES:
+            raise _error(503, 'Файл эталонного изображения пуст или превышает 10 МБ.')
+
+        content_type = _image_content_type(reference_bytes)
+        if content_type is None:
+            raise _error(503, 'Файл эталонного изображения имеет неподдерживаемый формат.')
+        reference_files.append((reference_bytes, reference_path.name, content_type))
+
+    return reference_files
 
 
 def _validate_output_url(output_url: object) -> str:
@@ -133,7 +150,7 @@ async def generate_doll_illustration(
         source_type = _image_content_type(source_bytes)
         if source_type is None:
             raise _error(400, 'Исходный файл повреждён или имеет неподдерживаемый формат.')
-        reference_bytes, reference_name, reference_type = _reference_for_style(style)
+        reference_files = _reference_files_for_style(style)
 
         own_client = client is None
         if client is None:
@@ -141,10 +158,11 @@ async def generate_doll_illustration(
             client = httpx.AsyncClient(timeout=timeout, follow_redirects=False)
 
         attempts = 1
-        files = [
-            ('file', (safe_source_name, source_bytes, source_type)),
-            ('reference', (reference_name, reference_bytes, reference_type)),
-        ]
+        files = [('file', (safe_source_name, source_bytes, source_type))]
+        files.extend(
+            ('reference', (reference_name, reference_bytes, reference_type))
+            for reference_bytes, reference_name, reference_type in reference_files
+        )
         form_data = {
             'operation': 'prompt_edit',
             'prompt': STYLE_PROMPT,
