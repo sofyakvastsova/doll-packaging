@@ -130,6 +130,47 @@ def test_photo_edit_sends_multiple_reference_images(image_storage, monkeypatch):
 	assert result.content_type == 'image/png'
 
 
+def test_monster_high_generation_uses_configured_reference_images(image_storage, monkeypatch):
+	_, source_filename = image_storage
+	refs = [
+		(image_storage[0] / 'monsterhighreference1.png', PNG_SIGNATURE + b'monster-reference-1'),
+		(image_storage[0] / 'monsterhighReference2.png', PNG_SIGNATURE + b'monster-reference-2'),
+		(image_storage[0] / 'monsterhighReference3.png', PNG_SIGNATURE + b'monster-reference-3'),
+	]
+	for path, data in refs:
+		path.write_bytes(data)
+	monkeypatch.setitem(photopanda.STYLE_REFERENCE_PATHS, 'monster_high', [path for path, _ in refs])
+
+	async def mock_provider(request: httpx.Request) -> httpx.Response:
+		if request.method == 'POST':
+			body = await request.aread()
+			assert f'filename="{source_filename}"'.encode() in body
+			assert body.count(b'name="reference"') == 3
+			for path, data in refs:
+				assert f'filename="{path.name}"'.encode() in body
+				assert data in body
+			return httpx.Response(200, json={
+				'id': str(uuid.uuid4()),
+				'status': 'done',
+				'type': 'prompt_edit',
+				'outputUrl': 'https://photopanda.ru/files/result.png',
+			}, request=request)
+		return httpx.Response(200, content=OUTPUT_BYTES, headers={'content-type': 'image/png'}, request=request)
+
+	async def run():
+		async with httpx.AsyncClient(transport=httpx.MockTransport(mock_provider)) as client:
+			return await photopanda.generate_doll_illustration(
+				source_filename,
+				'monster_high',
+				settings=_settings(),
+				client=client,
+			)
+
+	result = asyncio.run(run())
+	assert result.image_bytes == OUTPUT_BYTES
+	assert result.content_type == 'image/png'
+
+
 def test_same_prompt_is_used_for_both_styles():
     assert STYLE_PROMPT == photopanda.STYLE_PROMPT
 

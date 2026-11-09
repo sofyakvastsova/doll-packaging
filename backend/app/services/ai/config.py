@@ -23,9 +23,9 @@ def _resolve_style_reference_paths(style: str) -> list[Path]:
             'doll-style-reference.png',
         ],
         'monster_high': [
-            'monster-high-style-reference.png',
-            'monsterHighReference1.png',
-            'monster-high-reference.png',
+            'monsterhighreference1.png',
+            'monsterhighReference2.png',
+            'monsterhighReference3.png',
         ],
     }
 
@@ -42,7 +42,7 @@ STYLE_REFERENCE_PATHS = {
     'monster_high': _resolve_style_reference_paths('monster_high'),
 }
 
-STYLE_PROMPT = '''Transform the girl in image 1 into a full-body artwork matching the artistic language of images 2–4. Study and replicate their proportions, shapes, linework and hand-drawn texture. Exaggerate the anatomy: the head and legs must be much larger relative to the short, small torso. Do not use realistic human proportions; follow the references even if the result looks deliberately stylized or anatomically unusual. Keep her recognizable face, hairstyle, outfit and defining details. Use visible strokes, loose sketchy lines, irregular contours and imperfect color fills. Hair should be simplified and schematic, built from curls and directional strokes rather than finely rendered individual hairs. Avoid smooth gradients, flawless surfaces, uniform coloring and excessive digital polish. The result should look genuinely hand-drawn, not like a filtered photo or generic AI art. Show the complete figure from head to toe. Image 1 is the character reference; images 2–4 are the style and proportion
+STYLE_PROMPT = '''Transform the girl in image 1 into a full-body artwork matching the artistic language of images 2–4. Study and replicate their proportions, shapes, linework and hand-drawn texture. Exaggerate the anatomy: the head and legs must be much larger relative to the short, small torso. Do not use realistic human proportions; follow the references even if the result looks deliberately stylized or anatomically unusual. Keep her recognizable face, hairstyle, outfit and defining details. Use visible strokes, loose sketchy lines, irregular contours and imperfect color fills. Hair should be simplified and schematic, built from curls and directional strokes rather than finely rendered individual hairs. Avoid smooth gradients, flawless surfaces, uniform coloring and excessive digital polish. The result should look genuinely hand-drawn. Show the complete figure from head to toe. Image 1 is the character reference; images 2–4 are the style and proportion Background is white
 '''
 
 
