@@ -1,8 +1,10 @@
 node_modules/
 .venv/
+.venv-bg/
 .env
 __pycache__/
 *.pyc
 .DS_Store
 generated/
 backend/uploads/
+assets/test_no_bg.png

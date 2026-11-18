@@ -1,40 +1,38 @@
 import { useEffect, useState } from 'react'
-import { createMonsterHighSvg, monsterHighSvgUrl } from '../data/monsterHighPalette'
+import { createMonsterHighSvg, monsterHighSheets } from '../data/monsterHighPalette'
+import bratzSheet20 from '../../../templates/bratz/A4 - 20.svg?url'
+import bratzSheet21 from '../../../templates/bratz/A4 - 21.svg?url'
+import bratzSheet24 from '../../../templates/bratz/A4 - 24.svg?url'
+import bratzSheet25 from '../../../templates/bratz/A4 - 25.svg?url'
+import bratzBlister from '../../../templates/bratz/блитсер.svg?url'
+
+const bratzSheets = [
+  { name: 'Лист 1', url: bratzSheet20 },
+  { name: 'Лист 2', url: bratzSheet21 },
+  { name: 'Лист 3', url: bratzSheet24 },
+  { name: 'Лист 4', url: bratzSheet25 },
+  { name: 'Блистер', url: bratzBlister },
+]
 
 function PackagePreview({
   packagingType,
   accentColor,
   dollImage,
-  outerBackground,
-  innerBackground,
-  logo,
-  dollName,
-  description,
 }) {
-  const typeTheme = packagingType === 'monster-high' ? 'monster-high' : 'bratz'
-  const safeName = dollName.trim() || 'Имя куклы'
-  const safeDescription = description.trim() || 'Описание появится здесь.'
-
-  const outerStyle = {
-    background: outerBackground?.value || 'linear-gradient(135deg, #ffd8ea 0%, #ffc7dd 35%, #f8a5c8 100%)',
-  }
-
-  const innerStyle = {
-    background: innerBackground?.value || 'linear-gradient(135deg, #fff9f4 0%, #f5e5d8 35%, #ebd2c3 100%)',
-  }
-
-  const [monsterHighSvgSource, setMonsterHighSvgSource] = useState('')
+  const [monsterHighSvgSources, setMonsterHighSvgSources] = useState([])
 
   useEffect(() => {
     let active = true
 
-    fetch(monsterHighSvgUrl)
-      .then((response) => response.text())
-      .then((source) => {
-        if (active) setMonsterHighSvgSource(source)
+    Promise.all(monsterHighSheets.map((url) => fetch(url).then((response) => {
+      if (!response.ok) throw new Error('Не удалось загрузить шаблон')
+      return response.text()
+    })))
+      .then((sources) => {
+        if (active) setMonsterHighSvgSources(sources)
       })
       .catch(() => {
-        if (active) setMonsterHighSvgSource('')
+        if (active) setMonsterHighSvgSources(null)
       })
 
     return () => {
@@ -43,50 +41,46 @@ function PackagePreview({
   }, [])
 
   if (packagingType === 'monster-high') {
-    const svg = monsterHighSvgSource ? createMonsterHighSvg(monsterHighSvgSource, accentColor) : ''
-
     return (
       <div className="package-preview package-preview--monster-high">
-        <div className="preview-card preview-card--template" aria-label="Шаблон упаковки Monster High">
-          {svg ? <div className="monster-high-template" dangerouslySetInnerHTML={{ __html: svg }} /> : <span className="template-loading">Загрузка шаблона…</span>}
-        </div>
-        <div className="preview-card preview-card--reserved" aria-label="Шаблон фона">
-          <span>Шаблон фона пока не добавлен</span>
-        </div>
+        {monsterHighSvgSources === null ? (
+          <span className="template-loading" role="alert">Не удалось загрузить шаблон Monster High.</span>
+        ) : monsterHighSvgSources.length === 0 ? (
+          <span className="template-loading">Загрузка шаблона…</span>
+        ) : (
+          <div className="bratz-sheets" aria-label="Листы шаблона Monster High">
+            {monsterHighSvgSources.map((source, index) => (
+              <figure className="bratz-sheet" key={monsterHighSheets[index]}>
+                <div className="monster-high-sheet">
+                  <div className="monster-high-template" dangerouslySetInnerHTML={{ __html: createMonsterHighSvg(source, accentColor) }} />
+                  {index === 1 && dollImage ? <img src={dollImage} alt="Кукла" className="monster-high-doll" /> : null}
+                </div>
+                <figcaption>Лист {index + 1}</figcaption>
+              </figure>
+            ))}
+          </div>
+        )}
       </div>
     )
   }
 
   return (
-    <div className={`package-preview package-preview--${typeTheme}`}>
-      <div className="preview-card preview-card--front" style={outerStyle}>
-        <div className="preview-inner" style={innerStyle}>
-          <div className="preview-header">
-            <span className="badge">{packagingType === 'monster-high' ? 'Monster High' : 'Bratz'}</span>
-          </div>
-
-          <div className="preview-doll-wrap">
-            {dollImage ? (
-              <img src={dollImage} alt="Кукла" className="preview-doll" />
-            ) : (
-              <div className="preview-placeholder">Фото куклы</div>
-            )}
-          </div>
-
-          {logo ? <img src={logo} alt="Логотип" className="preview-logo" /> : null}
-          <div className="preview-name">{safeName}</div>
+    <div className="package-preview package-preview--bratz">
+        <div className="bratz-sheets" aria-label="Листы шаблона Bratz">
+          {bratzSheets.map((sheet) => (
+            <figure className="bratz-sheet" key={sheet.name}>
+              {sheet.url === bratzSheet20 || sheet.url === bratzSheet21 ? (
+                <div className="bratz-sheet-art">
+                  <img className="bratz-sheet-background" src={sheet.url} alt={`Bratz: ${sheet.name}`} />
+                  {dollImage ? <img src={dollImage} alt="Кукла" className={sheet.url === bratzSheet20 ? 'bratz-doll-half' : 'bratz-doll'} /> : null}
+                </div>
+              ) : (
+                <img src={sheet.url} alt={`Bratz: ${sheet.name}`} />
+              )}
+              <figcaption>{sheet.name}</figcaption>
+            </figure>
+          ))}
         </div>
-      </div>
-
-      <div className="preview-card preview-card--back" style={outerStyle}>
-        <div className="preview-inner preview-inner--back" style={innerStyle}>
-          {dollImage ? <img src={dollImage} alt="Кукла в фоне упаковки" className="preview-doll-back" /> : <div className="preview-placeholder preview-placeholder--large">Фоновое изображение</div>}
-          <div className="preview-copy">
-            <span className="badge badge--muted">История</span>
-            <p>{safeDescription}</p>
-          </div>
-        </div>
-      </div>
     </div>
   )
 }

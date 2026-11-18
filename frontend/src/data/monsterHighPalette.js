@@ -1,7 +1,10 @@
-import monsterHighSvgUrl from '../../../templates/monster-high/Frame 2136140310.svg?url'
+import sheet26 from '../../../templates/monster-high/A4 - 26.svg?url'
+import sheet27 from '../../../templates/monster-high/A4 - 27.svg?url'
+import sheet28 from '../../../templates/monster-high/A4 - 28.svg?url'
+import sheet29 from '../../../templates/monster-high/A4 - 29.svg?url'
 
 export const ORIGINAL_MONSTER_HIGH_ACCENT = '#FF0081'
-export { monsterHighSvgUrl }
+export const monsterHighSheets = [sheet26, sheet27, sheet28, sheet29]
 
 export function createMonsterHighSvg(svgSource, accentColor) {
 	const document = new DOMParser().parseFromString(svgSource, 'image/svg+xml')

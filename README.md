@@ -60,9 +60,13 @@ Frontend будет доступен по адресу:
 
 ## Запуск backend
 
+Для удаления фона нужен Python 3.11–3.13 (проверен Python 3.12). Существующее окружение Python 3.14 можно сохранить отдельно:
+
 ```bash
 cd backend
-source .venv/bin/activate
+python3.12 -m venv .venv-bg
+source .venv-bg/bin/activate
+pip install -r requirements.txt
 uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
@@ -94,8 +98,8 @@ AI-интеграция изолирована в `backend/app/services/ai/photo
 
 Текущая конфигурация reference-файлов:
 
-- Bratz: `assets/doll-style-reference.png` (файл уже добавлен).
-- Monster High: `assets/monster-high-style-reference.png` (файл нужно добавить отдельно).
+- Bratz: `assets/bratzReference1.png`, `assets/bratzReference2.png`, `assets/bratzReference3.png`.
+- Monster High: `assets/monsterhighreference1.png`, `assets/monsterhighReference2.png`, `assets/monsterhighReference3.png`.
 
 Пути задаются в `backend/app/services/ai/config.py`; это локальные ресурсы проекта, не загружаемые пользователем при каждом запросе. Если reference выбранного стиля отсутствует, backend возвращает configuration error и не обращается к PhotoPanda.
 
@@ -109,13 +113,17 @@ PHOTOPANDA_RESOLUTION=1K
 
 `backend/.env` игнорируется Git. API key остаётся только на backend. Конфигурация по умолчанию: `gpt-image-2-medium`, `1K`; разрешённые варианты модели и разрешения описаны в `config.py`.
 
-PhotoPanda получает `POST https://photopanda.ru/api/v1/v1/photos/process` с `operation=prompt_edit`, одним `file` (исходное фото), одним multipart `reference` (стиль), общим `prompt`, `modelId` и `resolution`. Prompt общий для обоих стилей; различается только reference. При успехе backend скачивает `outputUrl`, проверяет signature/MIME и размер до 25 МБ, затем сохраняет файл в `backend/uploads/images/`. Загрузки и генерации продолжают использовать уже существующую проверку исходного фото JPG/JPEG/PNG до 10 МБ.
+PhotoPanda получает `POST https://photopanda.ru/api/v1/v1/photos/process` с `operation=prompt_edit`, одним `file` (исходное фото), полями `reference` (стиль), общим `prompt`, `modelId` и `resolution`. Prompt общий для обоих стилей; различается только reference. При успехе backend скачивает `outputUrl`, проверяет signature/MIME и размер до 25 МБ, затем сохраняет файл в `backend/uploads/images/`. Загрузки и генерации продолжают использовать уже существующую проверку исходного фото JPG/JPEG/PNG до 10 МБ.
+
+Для Monster High результат дополнительно обрабатывается локально с помощью `rembg` и модели `isnet-general-use`. Модель загружается автоматически при первом запросе (около 180 МБ, необходим интернет) и затем используется из локального кеша. Перед запросом к PhotoPanda backend проверяет, что модель доступна. Сохраняются исходный результат и PNG с альфа-каналом, обрезанный по границам маски; API возвращает URL PNG и его `width` и `height`. При ошибке обработки в сообщении указан URL сохранённого исходника. Сегментация может сохранять остатки фона или обрезать тонкие детали, поэтому результат следует визуально проверять. Для коммерческого использования проверьте лицензию весов модели.
+
+Пользовательские фотографии, результаты генерации и тестовый файл не следует добавлять в Git. Изображения в `backend/uploads/images/` остаются на диске до их ручного удаления.
 
 Установка и запуск:
 
 ```bash
 cd backend
-source .venv/bin/activate
+source .venv-bg/bin/activate
 pip install -r requirements.txt
 uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
