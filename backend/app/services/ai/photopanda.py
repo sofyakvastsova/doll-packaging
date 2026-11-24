@@ -130,6 +130,7 @@ async def generate_doll_illustration(
     source_filename: str,
     style: str,
     *,
+    source_image: tuple[bytes, str] | None = None,
     settings: PhotoPandaSettings | None = None,
     client: httpx.AsyncClient | None = None,
 ) -> PhotoPandaResult:
@@ -146,7 +147,13 @@ async def generate_doll_illustration(
         if settings.model_id not in ALLOWED_MODELS or settings.resolution not in ALLOWED_RESOLUTIONS:
             raise _error(503, 'Настройки модели PhotoPanda некорректны.')
 
-        source_bytes, safe_source_name = load_uploaded_image(source_filename)
+        if source_image is None:
+            source_bytes, safe_source_name = load_uploaded_image(source_filename)
+        else:
+            source_bytes, source_name = source_image
+            safe_source_name = Path(source_name).name
+            if not safe_source_name or not source_bytes or len(source_bytes) > MAX_INPUT_SIZE_BYTES:
+                raise _error(400, 'Исходный файл пуст или превышает допустимый размер.')
         source_type = _image_content_type(source_bytes)
         if source_type is None:
             raise _error(400, 'Исходный файл повреждён или имеет неподдерживаемый формат.')

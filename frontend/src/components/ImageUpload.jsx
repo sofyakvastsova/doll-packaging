@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { generateDollImage, uploadImage } from '../services/api'
+import { generateProjectDoll, uploadProjectAsset } from '../services/api'
 
 const ACCEPTED_TYPES = ['image/jpeg', 'image/jpg', 'image/png']
 
@@ -9,6 +9,7 @@ function ImageUpload({
   imageSource,
   sourceImageUrl,
   sourceFilename,
+  project,
   style,
   onSourceChange,
   onUpload,
@@ -40,6 +41,12 @@ function ImageUpload({
     if (!file) {
       return
     }
+    if (!project) {
+      setUploadState('error')
+      setStatusMessage('Проект ещё загружается. Попробуйте выбрать фото через несколько секунд.')
+      event.target.value = ''
+      return
+    }
 
     const fileType = (file.type || '').toLowerCase()
     const fileExtension = file.name.split('.').pop()?.toLowerCase()
@@ -64,7 +71,7 @@ function ImageUpload({
     setUploadState('uploading')
     setStatusMessage('Загрузка...')
 
-    const result = await uploadImage(file)
+    const result = await uploadProjectAsset(file, 'original_photo', project)
 
     if (!result.ok) {
       setUploadState('error')
@@ -75,8 +82,8 @@ function ImageUpload({
       return
     }
 
-    const serverUrl = new URL(result.data.url, 'http://localhost:8000').toString()
-    onUpload(serverUrl, file.name, result.data.filename)
+    const serverUrl = project ? result.data.url : new URL(result.data.url, 'http://localhost:8000').toString()
+    onUpload(serverUrl, file.name, project ? result.data.id : result.data.filename, project ? result.data.id : null)
     setGenerationState('idle')
     setGenerationError('')
     setGenerationResult(null)
@@ -91,7 +98,12 @@ function ImageUpload({
     setGenerationState('loading')
     setGenerationError('')
     setGenerationResult(null)
-    const result = await generateDollImage(sourceFilename, style)
+    if (!project) {
+      setGenerationState('error')
+      setGenerationError('Проект ещё загружается. Попробуйте позже.')
+      return
+    }
+    const result = await generateProjectDoll(sourceFilename, style, project)
 
     if (!result.ok) {
       setGenerationState('error')
@@ -99,10 +111,15 @@ function ImageUpload({
       return
     }
 
-    const generatedUrl = new URL(result.data.url, 'http://localhost:8000').toString()
+    const generatedUrl = project ? result.data.url : new URL(result.data.url, 'http://localhost:8000').toString()
     setGenerationResult({ ...result.data, displayUrl: generatedUrl })
     setGenerationState('success')
-    onGenerated(generatedUrl, result.data.filename)
+    onGenerated(
+      generatedUrl,
+      result.data.filename,
+      project ? result.data.id : null,
+      project ? result.data.generated_asset?.id : null,
+    )
   }
 
   const handleRemove = () => {

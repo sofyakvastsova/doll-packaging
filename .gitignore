@@ -7,4 +7,9 @@ __pycache__/
 .DS_Store
 generated/
 backend/uploads/
+backend/data/
+backend/storage/
+backend/backups/
+backend/.env
 assets/test_no_bg.png
+assets/test2_no_bg.png

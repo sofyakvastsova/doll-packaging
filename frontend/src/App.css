@@ -40,6 +40,15 @@
   padding: 24px 22px 20px;
 }
 
+.project-controls {
+  display: grid;
+  gap: 0;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
 .field-block {
   margin-bottom: 18px;
 }

@@ -1,6 +1,7 @@
 import { useRef } from 'react'
+import { uploadProjectAsset } from '../services/api'
 
-function BackgroundSelector({ label, options, value, onSelect, onCustomUpload }) {
+function BackgroundSelector({ label, slot, options, value, project, onSelect, onCustomUpload }) {
   const inputRef = useRef(null)
 
   const handleFileChange = async (event) => {
@@ -16,11 +17,17 @@ function BackgroundSelector({ label, options, value, onSelect, onCustomUpload })
       return
     }
 
-    const reader = new FileReader()
-    reader.onload = () => {
-      onCustomUpload(reader.result)
+    if (!project) {
+      event.target.value = ''
+      return
     }
-    reader.readAsDataURL(file)
+    const result = await uploadProjectAsset(file, 'intermediate', project, { slot })
+    if (!result.ok) {
+      alert(result.error)
+      event.target.value = ''
+      return
+    }
+    onCustomUpload(result.data.url, result.data.id)
     event.target.value = ''
   }
 
@@ -46,6 +53,7 @@ function BackgroundSelector({ label, options, value, onSelect, onCustomUpload })
         <button
           type="button"
           className={value?.kind === 'custom' ? 'swatch-item swatch-item--selected swatch-item--upload' : 'swatch-item swatch-item--upload'}
+          disabled={!project}
           onClick={() => inputRef.current?.click()}
           aria-label="Загрузить свой фон"
         >

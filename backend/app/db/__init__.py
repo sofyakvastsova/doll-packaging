@@ -1,0 +1,1 @@
+"""SQLite persistence for projects, assets, templates, and generation tasks."""

@@ -1,13 +1,18 @@
 import { useRef } from 'react'
+import { uploadProjectAsset } from '../services/api'
 
 const ACCEPTED_TYPES = ['image/jpeg', 'image/jpg', 'image/png']
 
-function LogoUpload({ value, fileName, onUpload, onRemove }) {
+function LogoUpload({ value, fileName, project, onUpload, onRemove }) {
   const inputRef = useRef(null)
 
   const handleFileChange = async (event) => {
     const file = event.target.files?.[0]
     if (!file) {
+      return
+    }
+    if (!project) {
+      event.target.value = ''
       return
     }
 
@@ -17,11 +22,13 @@ function LogoUpload({ value, fileName, onUpload, onRemove }) {
       return
     }
 
-    const reader = new FileReader()
-    reader.onload = () => {
-      onUpload(reader.result, file.name)
+    const result = await uploadProjectAsset(file, 'logo', project)
+    if (!result.ok) {
+      alert(result.error)
+      event.target.value = ''
+      return
     }
-    reader.readAsDataURL(file)
+    onUpload(result.data.url, file.name, result.data.id)
     event.target.value = ''
   }
 
@@ -32,7 +39,7 @@ function LogoUpload({ value, fileName, onUpload, onRemove }) {
       {!value ? (
         <div className="upload-area upload-area--compact">
           <input ref={inputRef} type="file" accept=".png,.jpg,.jpeg,image/png,image/jpeg" hidden onChange={handleFileChange} />
-          <button type="button" className="ghost-button" onClick={() => inputRef.current?.click()}>
+          <button type="button" className="ghost-button" disabled={!project} onClick={() => inputRef.current?.click()}>
             Загрузить
           </button>
         </div>
@@ -42,7 +49,7 @@ function LogoUpload({ value, fileName, onUpload, onRemove }) {
           <div className="media-meta">
             <span>{fileName || 'Логотип'}</span>
             <div className="media-actions">
-              <button type="button" className="text-button" onClick={() => inputRef.current?.click()}>
+                  <button type="button" className="text-button" disabled={!project} onClick={() => inputRef.current?.click()}>
                 Заменить
               </button>
               <button type="button" className="text-button text-button--danger" onClick={onRemove}>
